@@ -6,7 +6,6 @@ const apikey = process.env.REACT_APP_API_KEY;
 const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
 
 const Login: React.FC = () => {
-
   const handleOauthLogin = () => {
     const umiverseAuthUrl = `https://umiverse.io/login?redirect=${REDIRECT_URI}&apikey=${apikey}`;
     window.location.href = umiverseAuthUrl;
@@ -19,12 +18,18 @@ const Login: React.FC = () => {
       alignItems="center"
       justifyContent="center"
       height="100vh"
+      sx={{ backgroundColor: 'black', color: 'white' }} // 黑色背景，白色字体
     >
+      {/* 游戏标题 */}
+      <Typography variant="h3" component="h1" sx={{ mb: 4 }}>
+        Your Game Name
+      </Typography>
+
       <Typography variant="h4" component="h1" gutterBottom>
         Login
       </Typography>
-      <Box component="form" noValidate autoComplete="off">
 
+      <Box component="form" noValidate autoComplete="off">
         <Grid container spacing={2} sx={{ mt: 2 }}>
           <Grid item xs={12}>
             <Button
