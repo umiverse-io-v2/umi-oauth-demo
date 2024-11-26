@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { decrypt } from '../utils/AES';
 import { Box, Button, Typography } from '@mui/material';
+import { decrypt } from '../utils/AES';
+import { MD5 } from 'crypto-js';
 
-const secretKey = process.env.REACT_APP_API_SECRET || 'your-secret-key';
+const merchantId = process.env.REACT_APP_MERCHANT_ID || 'your-merchant-id';
+const umiApiKey = process.env.REACT_APP_UMI_API_KEY || 'your-apit-key';
+const umiApiSecret = process.env.REACT_APP_UMI_API_SECRET || 'your-secret-key';
 const apiHost = process.env.REACT_APP_API_HOST || 'umiverse-api-host';
 
 interface UserInfo {
@@ -27,7 +30,20 @@ const LoginSuccess: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [apiResponse, setApiResponse] = useState<string>(''); // 保存API调用返回信息
 
-  // 获取用户信息
+  // 签名生成函数
+  const createSignature = (key: string, params: any, ts: number): string => {
+    let str = '';
+    for (const paramKey in params) {
+      if (params.hasOwnProperty(paramKey)) {
+        const value = params[paramKey];
+        str += `${value}`;
+      }
+    }
+    str += `${ts}${key}`;
+    return MD5(str).toString();
+  };
+
+  // 获取用户信息接口调用
   const fetchUserInfo = async (token: string) => {
     try {
       const response = await fetch(`${apiHost}/user/info`, {
@@ -41,45 +57,76 @@ const LoginSuccess: React.FC = () => {
       const result = await response.json();
       if (response.ok) {
         setUserInfo(result.data);
-        setApiResponse(JSON.stringify(result.data, null, 2));
+        setApiResponse(`User Info fetched successfully: ${JSON.stringify(result.data, null, 2)}`);
       } else {
-        setError(result.message || 'Failed to fetch user info');
+        setApiResponse(`Failed to fetch user info: ${result.message || 'Unknown error'}`);
       }
     } catch (err) {
-      setError('Error fetching user info');
+      if (err instanceof Error) {
+        setApiResponse(`Error fetching user info: ${err.message}`);
+      } else {
+        setApiResponse('Error fetching user info: Unknown error');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // 增加 DivePoints 方法
-  const addDivePoints = async (token: string) => {
+  // 增加 DivePoints 的方法
+  const addDivePoints = async () => {
+    if (!userInfo) {
+      setApiResponse('User information is not available.');
+      return;
+    }
+
+    const params = {
+      merchantId: merchantId, // 示例 merchantId
+      action: 'daily_quest_1',
+      user: userInfo.id.toString(),
+      amount: 6,
+      limitTotal: 0,
+      limitDay: 100,
+      description: 'Daily Quest 1',
+    };
+
+    const ts = Math.floor(Date.now() / 1000); // 当前时间戳（秒）
+    const signature = createSignature(umiApiKey, params, ts);
+
     try {
-      const response = await fetch(`${apiHost}/user/dive-points`, {
+      const response = await fetch(`${apiHost}/quest/divepoint/inc`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ points: 10 }), // 示例请求体
+        body: JSON.stringify({
+          ...params,
+          ts,
+          sign: signature,
+          extraParams: JSON.stringify({ action: 'daily_quest' }), // 示例额外参数
+        }),
       });
 
       const result = await response.json();
       if (response.ok) {
-        setApiResponse(`DivePoints updated successfully: ${JSON.stringify(result, null, 2)}`);
+        setApiResponse(`DivePoints added successfully: ${JSON.stringify(result, null, 2)}`);
       } else {
-        setError(result.message || 'Failed to add DivePoints');
+        setApiResponse(`Failed to add DivePoints: ${result.message || 'Unknown error'}`);
       }
     } catch (err) {
-      setError('Error adding DivePoints');
+      if (err instanceof Error) {
+        setApiResponse(`Error adding DivePoints: ${err.message}`);
+      } else {
+        setApiResponse('Error adding DivePoints: Unknown error');
+      }
     }
   };
 
   useEffect(() => {
     if (authorizationCode) {
       try {
-        const decryptedData = decrypt(authorizationCode, secretKey);
+        const decryptedData = decrypt(authorizationCode, umiApiSecret);
         setIdToken(decryptedData);
+        // 调用获取用户信息的接口
         fetchUserInfo(decryptedData);
       } catch (error) {
         console.error('Error decrypting authorizationCode:', error);
@@ -87,7 +134,7 @@ const LoginSuccess: React.FC = () => {
         setLoading(false);
       }
     }
-  }, [authorizationCode, navigate]);
+  }, [authorizationCode]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -123,9 +170,9 @@ const LoginSuccess: React.FC = () => {
         Back Home
       </Button>
 
-      {/* API列表 */}
+      {/* API 列表 */}
       <Box mt={5}>
-        <Typography variant="h5">API List (Developer Demo)</Typography>
+        <Typography variant="h5">Developer Demo: API List</Typography>
         <Box mt={2}>
           <Button
             variant="outlined"
@@ -138,7 +185,7 @@ const LoginSuccess: React.FC = () => {
           <Button
             variant="outlined"
             color="secondary"
-            onClick={() => addDivePoints(idToken!)}
+            onClick={addDivePoints}
             sx={{ m: 1 }}
           >
             2. Add DivePoints

@@ -2,12 +2,13 @@ import React from 'react';
 import { Box, Button, Typography, Grid } from '@mui/material';
 import { blue } from '@mui/material/colors';
 
-const apikey = process.env.REACT_APP_API_KEY;
+const umiApiKey= process.env.REACT_APP_UMI_API_KEY || 'your-apit-key';
+const umiApiSecret= process.env.REACT_APP_UMI_API_SECRET || 'your-secret-key';
 const REDIRECT_URI = process.env.REACT_APP_REDIRECT_URI;
 
 const Login: React.FC = () => {
   const handleOauthLogin = () => {
-    const umiverseAuthUrl = `https://umiverse.io/login?redirect=${REDIRECT_URI}&apikey=${apikey}`;
+    const umiverseAuthUrl = `https://umiverse.io/login?redirect=${REDIRECT_URI}&apikey=${umiApiKey}`;
     window.location.href = umiverseAuthUrl;
   };
 
