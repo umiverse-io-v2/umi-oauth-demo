@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import './App.css';
+import { Game } from './Pages/Game';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/login-success" element={<LoginSuccess />} />
         <Route path="/" element={<Index />} />
+        <Route path="/game" element={<Game />} />
       </Routes>
     </BrowserRouter>
   );

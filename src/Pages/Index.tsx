@@ -5,7 +5,8 @@ const Index: React.FC = () => {
   return (
     <div style={{ textAlign: 'center', marginTop: '50px' }}>
       <h1>UMMIVERSE Oauth DEMO</h1>
-      <Link to="/login">Login Demo</Link>
+      <Link to="/login">Login Demo</Link><br/><br/>
+      <Link to="/game">Game Demo</Link>
     </div>
   );
 };
